@@ -1,71 +1,54 @@
 import random
-import ast
+import base64
 
-shift = random.randint(1, 26)
-asciiUpper = range(65, 91)
-newAsciiUpper = random.sample(asciiUpper, 26)
-asciiLower = range(97, 123)
-newAsciiLower = random.sample(asciiLower, 26)
+shift = random.randint(1, 224)
+ascii = range(32, 256)
+newAscii = random.sample(ascii, 224)
+GREEN = "\033[92m"
+RED   = "\033[91m"
+CYAN  = "\033[96m"
+YELLOW = "\033[93m"
+RESET = "\033[0m"
 
 def encrypt():
     newText = ""
-    text = input("Massage that gets encrypted: ")
+    text = input(f"{CYAN}Message that gets encrypted: {RESET}")
     for c in text:
         nc = ord(c)
-        if nc in asciiUpper:
+        if nc in ascii:
             nc += shift
-            if(nc > 90):
-                nc -= 26
-            newText += chr(newAsciiUpper[asciiUpper.index(nc)])
-        elif nc in asciiLower:
-            nc += shift
-            if(nc > 122):
-                nc -= 26
-            newText += chr(newAsciiLower[asciiLower.index(nc)])
-        elif nc == 32:
+            if(nc > 255):
+                nc -= 224
+            newText += chr(newAscii[ascii.index(nc)])
+        else:
             newText += chr(nc)
-    return newText
+    return base64.b64encode(newText.encode("latin-1")).decode()
 
 def decrypt():
     newText = ""
-    key = input("Key eingeben: ")
+    key = input(f"{CYAN}Key eingeben: {RESET}")
     n = 4
     hexList = [key[i:i+n] for i in range(0, len(key), n)]
     joined ="".join(hexList)
     parts = joined.split("0x")
     keyList = [int(p, 16) for p in parts if p]
-    KeyListU = keyList[:26]
-    KeyListL = keyList[26:-1]
     shift = keyList[-1]
-    newAsciiUpper = [int(e/shift) for e in KeyListU]
-    newAsciiLower = [int(e/shift) for e in KeyListL]
-    text = input("Massage that gets decrypted: ")
+    newAscii = [int(e/shift) for e in keyList]
+    text = input(f"{CYAN}Message that gets decrypted: {RESET}")
+    text = base64.b64decode(text).decode("latin-1")
     for c in text:
         nc = ord(c)
-        if nc in newAsciiUpper:
-            nc = (asciiUpper[newAsciiUpper.index(nc)])
+        if nc in newAscii:
+            nc = (ascii[newAscii.index(nc)])
             nc -= shift
-            if nc < 65:
-                nc += 26
+            if nc < 32:
+                nc += 224
             newText += chr(nc)
-        elif nc in newAsciiLower:
-            nc = (asciiLower[newAsciiLower.index(nc)])
-            nc -= shift
-            if nc < 97:
-                nc += 26
-            newText += chr(nc)
-        elif nc == 32:
-            newText += chr(nc)
-
     return newText
 
 def keygen():
     keyList = []
-    for e in newAsciiUpper:
-        e *= shift
-        e = hex(e)
-        keyList.append(e)
-    for e in newAsciiLower:
+    for e in newAscii:
         e *= shift
         e = hex(e)
         keyList.append(e)
@@ -73,12 +56,28 @@ def keygen():
     key ="".join(map(str, keyList))
     return(key)
 
-ed = input("e/d: ")
-if(ed == "e"):
-    print(encrypt())
-    print(keygen())
-elif(ed == "d"):
-    print(decrypt())
+def encdecBase64():
+    text2 = input("Text: ")
+    ed2 = input("e/d: ")
+    if ed2 == "e":
+        return base64.b64encode(text2.encode("latin-1")).decode()
+    else:  
+        return base64.b64decode(text2).decode("latin-1")
+
+print(f"{GREEN}Encrypt and Decrypt Text{RESET}")
+ed = ""
+while True:
+    ed = input(f"{CYAN}What do you want to do? encrypt(e) | decrypt(d) | exit(x): {RESET}")
+    match ed:
+        case "e" | "E" | "encrypt" | "Encrypt":
+            print(f"{GREEN}Encrypted Message:\n{encrypt()}{RESET}")
+            print(f"{YELLOW}Key:\n{keygen()}{RESET}")
+        case "d" | "D" | "decrypt" | "Decrypt":
+            print(f"{GREEN}Decrypted Message:\n{decrypt()}{RESET}")
+        case "base64":
+            print(encdecBase64())
+        case "x" | "X" | "exit" | "Exit":
+            break;
 
 
 
